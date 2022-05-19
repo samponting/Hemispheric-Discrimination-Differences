@@ -108,7 +108,7 @@ for env = 1:numLightprobes
     box off
     saveas(gcf,[pwd,'/Figures/Env',num2str(env),mode,'.png'])   
 
-
+% comment 
 
 end
 
