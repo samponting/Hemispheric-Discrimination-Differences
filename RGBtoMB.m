@@ -1,12 +1,12 @@
 function MB = RGBtoMB(RGB)
-    %Conversion from RGB image to MB coordinate
+    %Conversion from RGB image to MB coordinate (10 deg field size)
     %RGB = imread('/Users/samuelponting/Downloads/lightprobe/HS_En1.png');
     load Matrix_LMS2RGB
     
-    Lw = 0.689903;
-    Mw = 0.348322;
-    Sw = 0.0371597/0.0192;
-
+    Lw = 0.692839;
+    Mw = 0.349676;
+    Sw = 0.1085;
+    
     if length(size(RGB)) == 3
         RGB_v = reshape(RGB,size(RGB,1)*size(RGB,2),size(RGB,3));
     elseif length(size(RGB)) == 2
@@ -14,7 +14,7 @@ function MB = RGBtoMB(RGB)
     end
     
     LMS_v = (Matrix_LMS2RGB*double(RGB_v'))';
-        
+    
     MB_v = zeros(size(RGB_v));
     
     MB_v(:,3) = Lw*LMS_v(:,1)+Mw*LMS_v(:,2);
