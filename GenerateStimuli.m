@@ -4,15 +4,17 @@ close all
 angleListDeg = 0:45:360;
 angleListDeg = angleListDeg(1:length(angleListDeg)-1);
 angleListRad = deg2rad(angleListDeg);
-startDist = 2;
+startDist = 3;
 white = ones([1 1 3]);
 white_MB = squeeze(RGBtoMB(white));
 white_MB = [0.7078, 1, 1];
 startPoints = zeros([2, length(angleListRad)]);
-
-for x = 1:100
+steps = 20;
+rg_threshold = 0.0071;
+yb_threshold = 0.1325;
+for x = 1:steps
     for z = 1:length(angleListRad)
-        [startPoints(1,z),startPoints(2,z)] = pol2cart(angleListRad(z),x*startDist/100);
+        [startPoints(1,z),startPoints(2,z)] = pol2cart(angleListRad(z),(x-1)*startDist/steps);
     %     scatter(startPoints(1,z),startPoints(2,z));hold on
     %     ax = gca;
     %     %xlim([0 1])
@@ -20,20 +22,20 @@ for x = 1:100
     %     plot([0,startPoints(1,z)],[0,startPoints(2,z)])
     end
     
-    MBstartPoints(1,:) = startPoints(1,:) + white_MB(1);
-    MBstartPoints(2,:) = startPoints(2,:) + white_MB(2);
+    MBstartPoints(1,:) = startPoints(1,:)+white_MB(1)/rg_threshold;
+    MBstartPoints(2,:) = startPoints(2,:)+white_MB(2)/yb_threshold;
+        
+    mat = ones(300);
     
-    mat = ones(1000);
-    
-    mat = gauss2d(mat,50000,[500, 500]);
+    mat = gauss2d(mat,300,[150, 150]);
     % figure()
     % imshow(mat)
     % figure()
     RGB = [];
     for hueNum = 1:length(angleListRad)
         fig = figure();
-        hue(1,1,1) = MBstartPoints(1,hueNum);
-        hue(1,1,2) = MBstartPoints(2,hueNum);
+        hue(1,1,1) = MBstartPoints(1,hueNum)*rg_threshold;
+        hue(1,1,2) = MBstartPoints(2,hueNum)*yb_threshold;
         hue(1,1,3) = 1;
     
         RGB(1:3,hueNum) = squeeze(MBtoRGB(hue));
@@ -55,7 +57,7 @@ for z = 1:length(angleListRad)
     ax = gca;
     %xlim([0 1])
     %ylim([0 1])
-    plot([white_MB(2),MBstartPoints(2,z)],[white_MB(1),MBstartPoints(1,z)],'Color',RGB(:,z),'LineWidth',2);
+    plot([white_MB(2)/yb_threshold,MBstartPoints(2,z)],[white_MB(1)/rg_threshold,MBstartPoints(1,z)],'Color',RGB(:,z),'LineWidth',2);
     %p.LineStyle("Color", RGB)
     xlabel('S/(L+M)')
     ylabel('L/(L+M)')
