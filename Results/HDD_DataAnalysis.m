@@ -2,15 +2,12 @@
 % load files and other resources
 files = dir('*.mat'); % results files - make sure all desired files are 
 % in the same folder as this file. Any excluded data should be in a
-% different folder.
+% different folder. I did this by adding an 'excluded' folder within the
+% results folder.
 CFs = csvread('linss10e_1.csv'); % cone fundamentals (for whitepoint). 
-% these are found on cvrl.com, look for the linear energy cone fundamentals
-% with a 10 degree field size. You should have this file already for the
-% lightprobe analysis.
+
 load([pwd, '/bbl/blackbodylocus100to1000000_MB.mat']); % blackbody locus
-% Takuma gave me this file. I'll be sending it to you along with this code
-% - make sure it is in a folder within the directory in order to
-% separate it from the actual results
+
 
 % search through the files extracting each of the participant's names. 
 pptnames = {};
