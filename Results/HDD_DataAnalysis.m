@@ -8,6 +8,9 @@ CFs = csvread('linss10e_1.csv'); % cone fundamentals (for whitepoint).
 
 load([pwd, '/bbl/blackbodylocus100to1000000_MB.mat']); % blackbody locus
 
+rg_threshold = 0.0071; % scaling factors
+yb_threshold = 0.1325;
+
 
 % search through the files extracting each of the participant's names. 
 pptnames = {};
@@ -20,7 +23,9 @@ for i = 1:length(files)
 end
 
 % logical flag for saving figures
-saveFig = 0;
+saveFig = 1;
+rescale = 1;
+
 
 %% Get Whitepoint
 
@@ -35,6 +40,11 @@ Sw = 2.146879448901693;
 MB(1) = whiteLMS(1)*Lw/(Lw*whiteLMS(1)+Mw*whiteLMS(2));
 MB(2) = whiteLMS(3)*Sw/(Lw*whiteLMS(1)+Mw*whiteLMS(2));
 
+if rescale
+    MB(1) = MB(1)/rg_threshold;
+    MB(2) = MB(2)/yb_threshold;
+end
+
 %% by ppt
 % by participant figures and results
 fig = figure();
@@ -45,6 +55,7 @@ fig.Position = [0 0 1500 2000];
 t = tiledlayout('flow','TileSpacing','compact');
 for i = 1:length(pptnames)
     nexttile
+    clear thresholds
     pptFiles = dir([pptnames{i},'_*.mat']);
     if length(pptFiles) > 1
         for y = 1:length(pptFiles)
@@ -52,7 +63,10 @@ for i = 1:length(pptnames)
             thresholds(:,:,y) = result.threshold(:,1:2);
         end
     end
-
+    if rescale
+        thresholds(:,1,:) = thresholds(:,1,:)./rg_threshold;
+        thresholds(:,2,:) = thresholds(:,2,:)./yb_threshold;
+    end
     % calculate the mean thresholds for each participant, then plot the
     % upper (1:8) and lower (9:16) thresholds.
     meanThreshold = mean(thresholds,3);
@@ -66,17 +80,21 @@ for i = 1:length(pptnames)
     [a,b] = fitellipse(meanThreshold(9:16,1),meanThreshold(9:16,2));
     plot(b(:,1),b(:,2),'-','Color',[0.3 0 1],'LineWidth',1.3)
     % plot blackbody locus
-    plot(bbl_MB(:,2),bbl_MB(:,3),'--','Color',[0 0 0]);
+    if ~rescale
+        plot(bbl_MB(:,2),bbl_MB(:,3),'--','Color',[0 0 0]);
+    end
     % subplot formatting
-    xlim([0.5 0.89])
-    ylim([0.84 1.23])
+    if ~rescale
+        xlim([0.5 0.89])
+        ylim([0.84 1.23])
+    end
     xlabel('L/(L+M)')
     ylabel('S/(L+M)')
     axis square
     ax = gca;
-    ax.LineWidth = 2;
+%     ax.LineWidth = 2;
     ax.FontName = 'Ariel';
-    ax.FontSize = 14;
+%     ax.FontSize = 14;
     title(sprintf('Discrimination Ellipses: %s',pptnames{i}))
 end
 
@@ -85,6 +103,11 @@ end
 for i = 1:length(files)
     load(files(i).name)
     thresholds(:,:,i) = result.threshold(:,1:2);
+end
+
+if rescale
+    thresholds(:,1,:) = thresholds(:,1,:)./rg_threshold;
+    thresholds(:,2,:) = thresholds(:,2,:)./yb_threshold;
 end
 nexttile
 
@@ -96,23 +119,31 @@ scatter(MB(1),MB(2),200,[0 0 0],'x')
 plot(b(:,1),b(:,2),'-','Color',[1 0 0.3],'LineWidth',1.3)
 [a,b] = fitellipse(meanThreshold(9:16,1),meanThreshold(9:16,2));
 plot(b(:,1),b(:,2),'-','Color',[0.3 0 1],'LineWidth',1.3)
-plot(bbl_MB(:,2),bbl_MB(:,3),'--','Color',[0 0 0]);
+if ~rescale
+    plot(bbl_MB(:,2),bbl_MB(:,3),'--','Color',[0 0 0]);
+end
 lgd = legend({'Upper','Lower','Equal Energy White','','','Black Body Locus'}, ...
     'FontSize',12);
 legend('boxoff')
 lgd.Layout.Tile = 'east';
-xlim([0.5 0.89])
-ylim([0.84 1.23])
+if ~rescale
+    xlim([0.5 0.89])
+    ylim([0.84 1.23])
+end
 xlabel('L/(L+M)')
 ylabel('S/(L+M)')
 axis square
 ax = gca;
-ax.LineWidth = 2;
+% ax.LineWidth = 2;
 ax.FontName = 'Ariel';
-ax.FontSize = 14;
+% ax.FontSize = 14;
 title('Discrimination Ellipses: Mean')
 if saveFig == 1
-    saveas(fig,'DiscriminationEllipses.png')
+    if ~rescale
+        saveas(fig,'DiscriminationEllipses.png')
+    else
+        saveas(fig,'DiscriminationEllipsesRescaled.png')
+    end
 end
 
 %% STATS: AREA
@@ -138,13 +169,17 @@ ax = gca;
 ax.LineWidth = 2;
 ax.FontName = 'Ariel';
 ax.FontSize = 14;
-ylim([0.0025 0.0042])
+
+ylim([2.5 4.5])
+if ~rescale
+    ylim([0.0025 0.0042])
+end
 title('Area of Ellipses')
 ylabel('Area')
 legend(sprintf('p = %s',string(round(areaStats.p(1),4))),'Standard Error')
-if saveFig == 1
-    saveas(fig,'EllipseAreas.png')
-end
+% if saveFig == 1
+%     saveas(fig,'EllipseAreas.png')
+% end
 
 %% STATS: ECCENTRICITY
 % this section essentially repeats the above section, but for the
@@ -157,9 +192,6 @@ for i = 1:length(UpperEllipse)
     eccentricityUpper(i) = sqrt(1-(min(UpperEllipse(3:4,i)).^2./max(UpperEllipse(3:4,i)).^2));
     eccentricityLower(i) = sqrt(1-(min(LowerEllipse(3:4,i)).^2./max(LowerEllipse(3:4,i)).^2));
 end
-
-
-
 
 eccentricityStats = mwwtest(eccentricityUpper,eccentricityLower);
 
@@ -174,10 +206,13 @@ ax.FontSize = 14;
 title('Eccentricity of Ellipses')
 ylabel('Eccentricity')
 legend(sprintf('p = %s',string(round(eccentricityStats.p(1),4))),'Standard Error')
-ylim([0.997 1])
-if saveFig == 1
-    saveas(fig,'EllipseAreas.png')
+ylim([0.6 0.75])
+if ~rescale
+    ylim([0.997 1])
 end
+% if saveFig == 1
+%     saveas(fig,'EllipseAreas.png')
+% end
 
 %% Find Angles
 
@@ -234,7 +269,14 @@ ax.FontSize = 14;
 title('Orientation of Ellipses')
 ylabel('Orientation (Degrees)')
 legend(sprintf('p = %s',string(round(orientationStats.p(1),4))),'Standard Error')
-ylim([88 92])
+ylim([87 93])
+if ~rescale
+    ylim([88 92])
+end
 if saveFig == 1
-    saveas(fig,'EllipseAreas.png')
+    if ~rescale
+        saveas(fig,'EllipseStats.png')
+    else
+        saveas(fig,'EllipseStatsRescaled.png')
+    end
 end
