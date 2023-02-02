@@ -10,7 +10,7 @@ if ~exist([pwd,'/Figures/'],'dir')
     mkdir([pwd,'/Figures/'])
 end
 
-mode = 'Whole';
+mode = 'Lower';
 % 'Upper' - Plots the distribution for the upper hemisphere
 % 'Lower' - Plots the distribution for the lower hemisphere
 % 'Whole' - Plots the distribution for the whole image
@@ -19,7 +19,7 @@ biVar = true;
 
 % true - Plots bivariate distribution to distribution
 
-savePlots = false;
+savePlots = true;
 
 
 for lps = 1:numlps
