@@ -24,7 +24,7 @@ end
 
 % logical flag for saving figures
 saveFig = 1;
-rescale = 1;
+rescale = 0;
 
 
 %% Get Whitepoint
