@@ -24,7 +24,7 @@ end
 
 % logical flag for saving figures
 saveFig = 1;
-rescale = 0;
+rescale = 1;
 
 
 %% Get Whitepoint
@@ -88,13 +88,13 @@ for i = 1:length(pptnames)
         xlim([0.5 0.89])
         ylim([0.84 1.23])
     end
-    xlabel('L/(L+M)')
-    ylabel('S/(L+M)')
+    xlabel('L/(L+M) rescaled')
+    ylabel('S/(L+M) rescaled')
     axis square
     ax = gca;
 %     ax.LineWidth = 2;
     ax.FontName = 'Ariel';
-%     ax.FontSize = 14;
+     ax.FontSize = 14;
     title(sprintf('Discrimination Ellipses: %s',pptnames{i}))
 end
 
@@ -130,13 +130,13 @@ if ~rescale
     xlim([0.5 0.89])
     ylim([0.84 1.23])
 end
-xlabel('L/(L+M)')
-ylabel('S/(L+M)')
+xlabel('L/(L+M)rescaled')
+ylabel('S/(L+M)rescaled')
 axis square
 ax = gca;
 % ax.LineWidth = 2;
 ax.FontName = 'Ariel';
-% ax.FontSize = 14;
+ ax.FontSize = 14;
 title('Discrimination Ellipses: Mean')
 if saveFig == 1
     if ~rescale
@@ -265,7 +265,7 @@ axis square
 ax = gca;
 ax.LineWidth = 2;
 ax.FontName = 'Ariel';
-ax.FontSize = 14;
+ax.FontSize = 12;
 title('Orientation of Ellipses')
 ylabel('Orientation (Degrees)')
 legend(sprintf('p = %s',string(round(orientationStats.p(1),4))),'Standard Error')

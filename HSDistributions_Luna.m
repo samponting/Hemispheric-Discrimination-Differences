@@ -1,28 +1,53 @@
 load([pwd,'/Associated Files/blackbodylocus100to1000000_MB.mat'])
 load([pwd,'/Associated Files/Basisvectors.mat'])
-CF = csvread('linss10e_1.csv');
+CFs = csvread('linss10e_1.csv');
 Lw = 0.692839;
 Mw = 0.349676;
 Sw = 2.146879448901693;%0.1085;
-CF = CF(11:10:311,:,:);
+CF = CFs(11:10:311,:,:);
 numlps = 10;
 if ~exist([pwd,'/Figures/'],'dir')
     mkdir([pwd,'/Figures/'])
 end
 
-mode = 'Whole';
+mode = 'Upper';
 % 'Upper' - Plots the distribution for the upper hemisphere
 % 'Lower' - Plots the distribution for the lower hemisphere
 % 'Whole' - Plots the distribution for the whole image
 
-biVar = true;
+biVar = false;
 
 % true - Plots bivariate distribution to distribution
 
+rg_threshold = 0.0071; % scaling factors
+yb_threshold = 0.1325;
+
+rescale = true;
+
+if rescale
+    bbl_MB(:,2) = bbl_MB(:,2)/rg_threshold;
+    bbl_MB(:,3) = bbl_MB(:,3)/yb_threshold;
+end
+
 savePlots = true;
 
+%% Get Whitepoint
 
-for lps = 1:numlps
+% equal energy white transformed into MB space using the CVRL 10 degree
+% weightings L,M and S.
+EEW = ones([1,441]);
+whiteLMS = EEW*CFs(:,2:4);
+
+MaB(1) = whiteLMS(1)*Lw/(Lw*whiteLMS(1)+Mw*whiteLMS(2));
+MaB(2) = whiteLMS(3)*Sw/(Lw*whiteLMS(1)+Mw*whiteLMS(2));
+
+if rescale
+    MaB(1) = MaB(1)/rg_threshold;
+    MaB(2) = MaB(2)/yb_threshold;
+end
+%% HS
+
+for lps = 10
     load([pwd,'/HyperspectralLightprobe/HS_En',num2str(lps),'.mat']);
     xRGB = double(imread([pwd,'/HyperspectralLightprobe/HS_En',num2str(lps),'.png']));
     sRGB = xRGB./max(xRGB,[],'all');
@@ -57,20 +82,25 @@ for lps = 1:numlps
     MB(:,1) = (Lw*L)./MB(:,3);
     MB(:,2) = (Sw*S)./MB(:,3);
     
+    if rescale
+        MB(:,1) = MB(:,1)/rg_threshold;
+        MB(:,2) = MB(:,2)/yb_threshold;
+    end
+
     v_En = DeleteZeroLum(MB,0.2);
-    a = polyfit(v_En(:,1)-0.7078,v_En(:,2)-1,1);
-    a(2) = 1-0.7078*a(1);
+    a = polyfit(v_En(:,1)-MaB(1),v_En(:,2)-MaB(2),1);
+    a(2) = MaB(2)-(MaB(1)*a(1));
     v = DeleteZeroLum(MB,0.05);
     En_mean = [mean(v(:,1)),mean(v(:,2))];
     fig = figure();
 
     scatter(MB(:,1),MB(:,2),2,RGB./max(RGB,[],2)*0.8,'filled','MarkerEdgeColor','none','MarkerFaceAlpha',0.5);hold on
     
-    line([0 100],[a(2) a(1)*100+a(2)],'LineWidth',1.5,'Color',[1 0.2 0.2],'LineStyle','--');hold on
-    plot(bbl_MB(:,2),bbl_MB(:,3),'Color',[0 0 1],'LineWidth',1.5,'LineStyle','--')
-    scatter(0.6891,1.0714,200,[0.3 0.3 0.3],'+','LineWidth',1.5);hold on
-    scatter(En_mean(1),En_mean(2),230,[0.3 0.3 0.3],'x','LineWidth',1.5);hold on
-    tag = '';
+    %line([0 103],[a(2) a(1)*103+a(2)],'LineWidth',1.5,'Color',[1 0.2 0.2],'LineStyle','--');hold on
+    %plot(bbl_MB(:,2),bbl_MB(:,3),'Color',[0 0 1],'LineWidth',1.5,'LineStyle','--')
+    scatter(MaB(1),MaB(2),200,[0.3 0.3 0.3],'+','LineWidth',1.5);hold on
+    %scatter(En_mean(1),En_mean(2),230,[0.3 0.3 0.3],'x','LineWidth',1.5);hold on
+    tag = 'noEllipse';
 
     if biVar
         elpt=ellipsedata(cov(v(:,1),v(:,2)),[mean(v(:,1)),mean(v(:,2))],length(v),1);
@@ -90,10 +120,16 @@ for lps = 1:numlps
     ax = gca;
     xbound = [0.65 0.74];
     ybound = [0.3 2.5];
+
+    if rescale
+       xbound = [90 105];
+       ybound = [2,20];
+    end
+  
     ax.XTick = xbound;ax.XLim = xbound;ax.XTickLabel = xbound;
     ax.YTick = ybound;ax.YLim = ybound;ax.YTickLabel = ybound;
-    xlabel('L/(L+M)');
-    ylabel('S/(L+M)');
+    xlabel('L/(L+M) rescaled');
+    ylabel('S/(L+M) rescaled');
     ax.FontName = 'Arial';
     ax.FontSize = 12;
     ax.LineWidth = 0.4;
@@ -104,7 +140,11 @@ for lps = 1:numlps
     box off
 
     if savePlots == true
-        saveas(gcf,[pwd,'/Figures/Env',num2str(lps),'_',mode,'_Dist',tag,'.png'])
+        if rescale
+          saveas(gcf,[pwd,'/Figures/Env',num2str(lps),'_',mode,'_Dist','_Rescaled',tag,'.png'])
+        else
+          saveas(gcf,[pwd,'/Figures/Env',num2str(lps),'_',mode,'_Dist',tag,'.png'])
+        end
     end
 end
 

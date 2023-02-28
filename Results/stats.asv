@@ -1,0 +1,9 @@
+a = angleUpper(:,:)
+b = angleLower(:,:)
+
+mean(a)
+std(a) %/sqrt(28)
+mean(b)
+std(b) %/sqrt(28)
+
+h = kstest(angleLower(:,:))
